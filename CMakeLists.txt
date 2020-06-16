@@ -15,11 +15,7 @@ if(WIN32)
 	add_compile_definitions(_HAS_EXCEPTIONS=0)
 
 	add_executable(demo WIN32 code/win32_unity.cpp)
-
-	# Assuming linux
 else()
-	# Disable exceptions
-	add_compile_options(-fno-exceptions)
-	add_executable(demo code/linux_unity.cpp)
+	message(FATAL_ERROR "Unsupported platform")
 endif()
 
