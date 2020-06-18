@@ -70,8 +70,8 @@ void WinApp::resize_bitmap(int32_t width, int32_t height)
 	}
 
 	bitmap_info.bmiHeader.biSize        = sizeof(bitmap_info.bmiHeader);
-	bitmap_info.bmiHeader.biWidth       = width;
-	bitmap_info.bmiHeader.biHeight      = height;
+	bitmap_info.bmiHeader.biWidth       =  width;
+	bitmap_info.bmiHeader.biHeight      = -height;
 	bitmap_info.bmiHeader.biPlanes      = 1;
 	bitmap_info.bmiHeader.biBitCount    = 32;
 	bitmap_info.bmiHeader.biCompression = BI_RGB;
@@ -128,7 +128,29 @@ LRESULT CALLBACK WinApp::main_window_proc(HWND window, UINT message, WPARAM WPar
 
 void WinApp::render()
 {
-	
+	uint32_t stride = bitmap_width * bytes_per_pixel;
+
+	uint8_t* row = (uint8_t*)(bitmap);
+
+	for(int32_t y = 0; y < bitmap_height; ++y)
+	{
+		uint32_t* pixel = (uint32_t*)(row);
+
+		for(int32_t x = 0; x < bitmap_width; ++x)
+		{
+			uint8_t red   = 000;
+			uint8_t green = 000;
+			uint8_t blue  = 000;
+
+			if(x > 100 && x < bitmap_width - 100 && y > 100 && y < bitmap_height - 100)
+			{
+				red = 255;
+			}
+
+			*pixel++ = ((red << 16) | (green << 8) | (blue));
+		}
+		row += stride;
+	}
 }
 
 int WinApp::main(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow)
@@ -180,7 +202,10 @@ int WinApp::main(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, i
 			DispatchMessage(&message);
 		}
 
+		HDC device_context = GetDC(main_window);
 		render();
+		finish_render(device_context);
+		ReleaseDC(main_window, device_context);
 	}
 	return EXIT_SUCCESS;
 }
