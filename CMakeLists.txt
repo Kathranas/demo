@@ -14,7 +14,7 @@ if(WIN32)
 	# Disable exceptions
 	add_compile_definitions(_HAS_EXCEPTIONS=0)
 
-	add_executable(demo WIN32 code/win32_unity.cpp)
+	add_executable(demo WIN32 code/win_unity.cpp)
 else()
 	message(FATAL_ERROR "Unsupported platform")
 endif()
