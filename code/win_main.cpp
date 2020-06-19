@@ -115,7 +115,6 @@ LRESULT CALLBACK WinApp::main_window_proc(HWND window, UINT message, WPARAM WPar
 		{
 			PAINTSTRUCT paint;
 			HDC device_context = BeginPaint(window, &paint);
-
 			win_app.finish_render(device_context);
 			EndPaint(window, &paint);
 			return 0;
@@ -128,28 +127,30 @@ LRESULT CALLBACK WinApp::main_window_proc(HWND window, UINT message, WPARAM WPar
 
 void WinApp::render()
 {
-	uint32_t stride = bitmap_width * bytes_per_pixel;
-
-	uint8_t* row = (uint8_t*)(bitmap);
+	uint32_t* pixel = nullptr;
+	uint8_t* ptr    = (uint8_t*)(bitmap);
 
 	for(int32_t y = 0; y < bitmap_height; ++y)
 	{
-		uint32_t* pixel = (uint32_t*)(row);
-
 		for(int32_t x = 0; x < bitmap_width; ++x)
 		{
-			uint8_t red   = 000;
-			uint8_t green = 000;
-			uint8_t blue  = 000;
+			pixel = (uint32_t*)(ptr);
 
-			if(x > 100 && x < bitmap_width - 100 && y > 100 && y < bitmap_height - 100)
+			uint8_t red   = x / 2;
+			uint8_t green = x;
+			uint8_t blue  = y;
+
+			if(x > bitmap_width / 4 && x < 3 * bitmap_width / 4
+			&& y > bitmap_height / 4 && y < 3 * bitmap_height / 4)
 			{
-				red = 255;
+				red   = 255;
+				green = 000;
+				blue  = 000;
 			}
 
-			*pixel++ = ((red << 16) | (green << 8) | (blue));
+			*pixel = ((red << 16) | (green << 8) | (blue));
+			ptr += bytes_per_pixel;
 		}
-		row += stride;
 	}
 }
 
