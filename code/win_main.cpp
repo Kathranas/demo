@@ -2,6 +2,15 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstdint>
+#include <cmath>
+
+// :(
+#include <chrono>
+
+#ifdef M_PI
+#undef M_PI
+#endif
+#define M_PI 3.14159265
 
 // Windows params from main
 struct WinParams
@@ -25,6 +34,8 @@ private:
 	void*      bitmap;
 	int32_t    bitmap_width;
 	int32_t    bitmap_height;
+	int32_t    frame_time;
+	int32_t    total_time;
 
 	static LRESULT CALLBACK main_window_proc(HWND window, UINT message, WPARAM WParam, LPARAM LParam);
 	void render();
@@ -125,10 +136,20 @@ LRESULT CALLBACK WinApp::main_window_proc(HWND window, UINT message, WPARAM WPar
 	}
 }
 
+inline float radians(float x)
+{
+    return x * (180.0 / M_PI);
+}
+
 void WinApp::render()
 {
 	uint32_t* pixel = nullptr;
-	uint8_t* ptr    = (uint8_t*)(bitmap);
+	uint8_t*  ptr   = (uint8_t*)(bitmap);
+	uint8_t   red   = 000;
+	uint8_t   green = 000;
+	uint8_t   blue  = 000;
+
+	float time = total_time * 1e-3;
 
 	for(int32_t y = 0; y < bitmap_height; ++y)
 	{
@@ -136,19 +157,35 @@ void WinApp::render()
 		{
 			pixel = (uint32_t*)(ptr);
 
-			uint8_t red   = x / 2;
-			uint8_t green = x;
-			uint8_t blue  = y;
+			red   = 000;
+			green = 000;
+			blue  = 000;
 
-			if(x > bitmap_width / 4 && x < 3 * bitmap_width / 4
-			&& y > bitmap_height / 4 && y < 3 * bitmap_height / 4)
-			{
-				red   = 255;
-				green = 000;
-				blue  = 000;
-			}
+			// Shader code
+			
+			// Required because we want floating point maths
+			float fx = x;
+			float fy = y;
 
+			// Divide the screen up into squares
+			float num_squares = 12.0f;
+			float px          = floor(fx / bitmap_width  * num_squares) / num_squares;
+			float py          = floor(fy / bitmap_height * num_squares) / num_squares;
+
+			// Traveling waves through each colour channel
+			float r = cos(3.0f * px + 2.0f * py - 2.0f * time +  0.0f);
+			float g = cos(3.0f * px + 2.0f * py - 2.0f * time + 23.0f);
+			float b = cos(3.0f * px + 2.0f * py - 2.0f * time + 21.0f);
+
+			// Normalise result between 0 -> 255
+			red   = 255.0f * (0.5f + 0.5f * r);
+			green = 255.0f * (0.5f + 0.5f * g);
+			blue  = 255.0f * (0.5f + 0.5f * b);
+
+			// Set pixel colour
 			*pixel = ((red << 16) | (green << 8) | (blue));
+
+			// Advance
 			ptr += bytes_per_pixel;
 		}
 	}
@@ -193,6 +230,10 @@ int WinApp::main(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, i
 
 	MSG message;
 
+	using Clock = std::chrono::steady_clock;
+	Clock::time_point p1 = Clock::now();
+	Clock::time_point p2 = p1;
+
 	// Main Loop
 	for(;;)
 	{
@@ -207,6 +248,11 @@ int WinApp::main(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, i
 		render();
 		finish_render(device_context);
 		ReleaseDC(main_window, device_context);
+
+		p2 = Clock::now();
+		frame_time = std::chrono::duration_cast<std::chrono::milliseconds>(p2 - p1).count();
+		total_time += frame_time;
+		p1 = p2;
 	}
 	return EXIT_SUCCESS;
 }
