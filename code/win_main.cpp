@@ -10,7 +10,7 @@
 #ifdef M_PI
 #undef M_PI
 #endif
-#define M_PI 3.14159265
+#define M_PI 3.14159265f
 
 // Windows params from main
 struct WinParams
@@ -34,8 +34,8 @@ private:
 	void*      bitmap;
 	int32_t    bitmap_width;
 	int32_t    bitmap_height;
-	int32_t    frame_time;
-	int32_t    total_time;
+	int64_t    frame_time;
+	int64_t    total_time;
 
 	static LRESULT CALLBACK main_window_proc(HWND window, UINT message, WPARAM WParam, LPARAM LParam);
 	void render();
@@ -138,7 +138,7 @@ LRESULT CALLBACK WinApp::main_window_proc(HWND window, UINT message, WPARAM WPar
 
 inline float radians(float x)
 {
-    return x * (180.0 / M_PI);
+    return x * (180.0f / M_PI);
 }
 
 void WinApp::render()
@@ -149,7 +149,7 @@ void WinApp::render()
 	uint8_t   green = 000;
 	uint8_t   blue  = 000;
 
-	float time = total_time * 1e-3;
+	float time = total_time * 1e-3f;
 
 	for(int32_t y = 0; y < bitmap_height; ++y)
 	{
@@ -164,8 +164,8 @@ void WinApp::render()
 			// Shader code
 			
 			// Required because we want floating point maths
-			float fx = x;
-			float fy = y;
+			float fx = (float)(x);
+			float fy = (float)(y);
 
 			// Divide the screen up into squares
 			float num_squares = 12.0f;
@@ -178,9 +178,9 @@ void WinApp::render()
 			float b = cos(3.0f * px + 2.0f * py - 2.0f * time + 21.0f);
 
 			// Normalise result between 0 -> 255
-			red   = 255.0f * (0.5f + 0.5f * r);
-			green = 255.0f * (0.5f + 0.5f * g);
-			blue  = 255.0f * (0.5f + 0.5f * b);
+			red   = (uint8_t) (255.0f * (0.5f + 0.5f * r));
+			green = (uint8_t) (255.0f * (0.5f + 0.5f * g));
+			blue  = (uint8_t) (255.0f * (0.5f + 0.5f * b));
 
 			// Set pixel colour
 			*pixel = ((red << 16) | (green << 8) | (blue));
